@@ -120,13 +120,13 @@ unzip "$IPA"
 cd Payload
 NAME=$(ls -1)
 EXECUTABLE=${NAME%.app}
-cd $NAME
+cd "$NAME"
 ldid -S $EXECUTABLE
 cd ..
 cd ..
-zip -r $EXECUTABLE.ipa Payload
+zip -r "$EXECUTABLE".ipa Payload
 rm -r Payload
-echo Generated signed .ipa in $(pwd)/$EXECUTABLE.ipa
+echo "[*]Generated signed .ipa in $(pwd)/"$EXECUTABLE".ipa
 }
 
 
