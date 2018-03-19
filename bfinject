@@ -28,6 +28,13 @@ function help {
     echo
 }
 
+#
+#make the Cracked directory if it doesn't exist
+#
+DIRECTORY=/var/mobile/Documents/Cracked/
+if [ ! -d "$DIRECTORY" ]; then
+  mkdir /var/mobile/Documents/Cracked/
+fi
 
 
 #
@@ -120,16 +127,14 @@ unzip "$IPA"
 cd Payload
 NAME=$(ls -1)
 EXECUTABLE=${NAME%.app}
-cd "$NAME"
+cd "$(ls -1)"
 ldid -S $EXECUTABLE
 cd ..
 cd ..
 zip -r "$EXECUTABLE".ipa Payload
 rm -r Payload
-echo "[*]Generated signed .ipa in $(pwd)/"$EXECUTABLE".ipa
+echo "[*]Generated signed .ipa in $(pwd)/"$EXECUTABLE".ipa"
 }
-
-
 #
 # Entitlements for dylib injection and for our injector binary.
 #
@@ -151,8 +156,6 @@ if [ ! -f entitlements.xml ]; then
 </plist>
 EOF
 fi
-
-
 #
 # Detect LiberiOS vs Electra
 #
@@ -174,8 +177,6 @@ else
     echo "[!] Unknown jailbreak. Aborting."
     exit 1
 fi
-
-
 #
 # Do the actual injection into the remote process
 #
@@ -191,11 +192,9 @@ for DYLIB in ${DYLIBS[@]}; do
     RANDOM_NAME="${INJECTOR%/*}/`dd if=/dev/random bs=1 count=16 2>/dev/null | md5sum`"
     DYLIB_DIR="/System/Library/Frameworks/${RAND}.framework"
     DYLIB_PATH="$DYLIB_DIR/$RAND.dylib"
-
     # We'll give the injector as a random filename
     cp "$INJECTOR" "$RANDOM_NAME"
     chmod +x "$RANDOM_NAME"
-
     #
     # Find the full path to the target app binary
     #
@@ -206,7 +205,6 @@ for DYLIB in ${DYLIBS[@]}; do
         exit 1
     fi
     echo "[+] Injecting into '$BINARY'"
-
     #
     # Get the Team ID that signed the target app's binary.
     # We need this so we can re-sign the injected .dylib to fool the kernel
@@ -218,13 +216,11 @@ for DYLIB in ${DYLIBS[@]}; do
     if [ "$TEAMID" == "" ]; then
         echo "[+] WARNING: No Team ID found. Continuing regardless, but expect weird stuff to happen."
     fi
-
     #
     # Move the injectee dylib to a sandbox-friendly location
     #
     mkdir "$DYLIB_DIR"
     cp "$DYLIB" "$DYLIB_PATH"
-
     #
     # Thin the binary so that it's not FAT and contains only an arm64 image
     echo "[+] Thinning dylib into non-fat arm64 image"
@@ -233,9 +229,8 @@ for DYLIB in ${DYLIBS[@]}; do
         rm -f "$DYLIB_PATH"
         DYLIB_PATH="${DYLIB_PATH}.arch_arm64"
     else
-        echo "[!] WARNING: Wasn't able to thin the dylib."
+        echo "[!] WARNING: Wasnt able to thin app"
     fi
-
     #
     # Sign platform entitlements and Team ID into our dylib
     #
@@ -246,7 +241,6 @@ for DYLIB in ${DYLIBS[@]}; do
         clean_up
         exit 1
     fi
-
     #
     # Sign the randomly-renamed injector binary with  platform entitlements
     #
@@ -256,18 +250,15 @@ for DYLIB in ${DYLIBS[@]}; do
         clean_up
         exit 1
     fi
-
     #
     # Inject!
     #
     "$RANDOM_NAME" "$PID" "$DYLIB_PATH"
 done
-
 #
 # Sign the app
 #
 echo "[*] Signing the executable with ldid"
-
 export THEFILE="$(find /var/mobile/Containers/Data/Application/ -name decrypted-app.ipa)"
 LOCATION=/var/mobile/Documents/Cracked/
 cp $THEFILE $LOCATION
@@ -277,9 +268,6 @@ ls
 signapp decrypted-app.ipa
 rm -r decrypted-app.ipa
 echo "[*] Signing completed successfully"
-
-
-
 #
 # EOF
 #
