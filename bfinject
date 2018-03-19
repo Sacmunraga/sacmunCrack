@@ -255,6 +255,8 @@ for DYLIB in ${DYLIBS[@]}; do
     #
     "$RANDOM_NAME" "$PID" "$DYLIB_PATH"
 done
+
+sleep 5s
 #
 # Sign the app
 #
