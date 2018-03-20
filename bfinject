@@ -128,7 +128,8 @@ cd Payload
 NAME=$(ls -1)
 EXECUTABLE=${NAME%.app}
 cd "$(ls -1)"
-ldid -S $EXECUTABLE
+echo "Finna sign $EXECUTABLE"
+ldid -S "$EXECUTABLE"
 cd ..
 cd ..
 zip -r "$EXECUTABLE".ipa Payload
@@ -256,7 +257,7 @@ for DYLIB in ${DYLIBS[@]}; do
     "$RANDOM_NAME" "$PID" "$DYLIB_PATH"
 done
 
-sleep 5s
+sleep 10s
 #
 # Sign the app
 #
