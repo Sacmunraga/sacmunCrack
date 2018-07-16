@@ -2,10 +2,15 @@
 
 CYCRIPT_PORT=1337
 
+if [[ $EUID -ne 0 ]]; then
+echo "This script must be run as root"
+exit 1
+fi
+
 function help {
     echo
     echo "Welcome to sacmunCrack - the modified version of bfdecrypt, with full support for the latest Electra and executable signing!"
-    echo "Credits: Carl Livitt @ Bishop Fox. @sacmunraga for much needed hacks (Support, Signing)"
+    echo "Credits: Carl Livitt @ Bishop Fox, @sacmunraga, and @user_hidden for much needed hacks (Support, Signing)"
     echo "If on Electra, make sure your running with the "Tweaks" option DISABLED, if not, reboot and rejailbreak."
     echo
     echo "Syntax: $0 [-p PID | -P appname] [-l /path/to/yourdylib | -L feature]"
@@ -53,7 +58,7 @@ fi
 if [ "$1" == "-p" ]; then
     PID=$2
 else
-    count=`ps axwww|grep "$2"|grep container|grep '.app'|grep -v grep |wc -l|sed 's/ //g'`
+    count=`ps aux|grep "$2"|grep container|grep '.app'|grep -v grep |wc -l|sed 's/ //g'`
     if [ "$count" != "1" ]; then  
         echo "[!] \"$2\" was not uniquely found, please check your criteria."
         exit 1
@@ -123,18 +128,20 @@ signapp () {
 CURRENTDIR=/var/mobile/Documents/Cracked/
 IPA="$*"
 echo Attempting to unzip .ipa
-unzip "$IPA"
+unzip -q "$IPA"
 cd Payload
 NAME=$(ls -1)
 EXECUTABLE=${NAME%.app}
 cd "$(ls -1)"
-echo "Finna sign $EXECUTABLE"
+echo "[+] Attempting to sign $EXECUTABLE with LDID"
 ldid -S "$EXECUTABLE"
 cd ..
 cd ..
-zip -r "$EXECUTABLE".ipa Payload
+echo [+] Attempting to zip and rebuild the .ipa
+zip -r -q "$EXECUTABLE".ipa Payload
 rm -r Payload
-echo "[*]Generated signed .ipa in $(pwd)/"$EXECUTABLE".ipa"
+echo "[+] Signing completed successfully"
+echo "[+]Generated signed .ipa in $(pwd)/"$EXECUTABLE".ipa"
 }
 #
 # Entitlements for dylib injection and for our injector binary.
@@ -257,7 +264,11 @@ for DYLIB in ${DYLIBS[@]}; do
     "$RANDOM_NAME" "$PID" "$DYLIB_PATH"
 done
 
-sleep 10s
+echo "[+] Decrypting App on Device ..."
+echo "[+] This may take up to a minute to finish, please wait ..."
+echo "[+] Waiting additional 15 seconds for .ipa to be found. Edit line 271 of script to +/- waiting time..."
+
+sleep 15s
 #
 # Sign the app
 #
@@ -268,12 +279,12 @@ cp $THEFILE $LOCATION
 rm -r $THEFILE
 cd $LOCATION
 ls
+echo "[+] If you see decrypted-app.ipa above we are almost done ..."
 signapp decrypted-app.ipa
 rm -r decrypted-app.ipa
-echo "[*] Signing completed successfully"
+echo "[+] Signing completed successfully"
 #
 # EOF
 #
-echo "[+] So long and thanks for all the fish."
 clean_up
 exit 0
